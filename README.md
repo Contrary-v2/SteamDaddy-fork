@@ -7,7 +7,7 @@
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![Platform](https://img.shields.io/badge/platform-windows-lightgray.svg)]()
   [![Discord](https://img.shields.io/badge/Discord-ContraryCDN-5865F2?logo=discord&logoColor=white)](https://discord.gg/XN6YGcUF89)
-  [![Stars](https://img.shields.io/github/stars/Contrary7/SteamDaddy-Backup?style=social)](https://github.com/Contrary7/SteamDaddy-Backup/stargazers)
+  [![Stars](https://img.shields.io/github/stars/Contrary-v2/SteamDaddy-fork?style=social)](https://github.com/Contrary-v2/SteamDaddy-fork/stargazers)
 
   <p align="center">
     <a href="#-what-is-steamdaddy">What is it?</a> •
