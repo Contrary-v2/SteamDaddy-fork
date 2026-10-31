@@ -30,7 +30,9 @@ if (-not $isAdmin) {
             $tmpScript = Join-Path $env:TEMP "SteamDaddy_Install.ps1"
             $scriptUrls = @(
                 "https://raw.githubusercontent.com/Contrary-v2/SteamDaddy-fork/main/install_b.ps1",
-                "https://ghproxy.com/https://raw.githubusercontent.com/Contrary-v2/SteamDaddy-fork/main/install_b.ps1",
+                "https://kkgithub.com/Contrary-v2/SteamDaddy-fork/raw/main/install_b.ps1",
+                "https://ghproxy.net/https://raw.githubusercontent.com/Contrary-v2/SteamDaddy-fork/main/install_b.ps1",
+                "https://gh.con.sh/https://raw.githubusercontent.com/Contrary-v2/SteamDaddy-fork/main/install_b.ps1",
                 "https://cdn.jsdelivr.net/gh/Contrary-v2/SteamDaddy-fork@main/install_b.ps1",
                 "https://contrary7.duckdns.org/contrary/steamdaddy/raw/branch/main/install.ps1",
                 "https://raw.githubusercontent.com/Contrary7/SteamDaddy-Backup/main/install_b.ps1",
@@ -61,9 +63,11 @@ Write-Host "[SteamDaddy] Fetching latest release..." -ForegroundColor Cyan
 try {
     $candidateUrls = @(
         "https://github.com/Contrary-v2/SteamDaddy-fork/releases/latest/download/SteamDaddy.exe",
-        "https://ghproxy.com/https://github.com/Contrary-v2/SteamDaddy-fork/releases/latest/download/SteamDaddy.exe",
-        "https://mirror.ghproxy.com/https://github.com/Contrary-v2/SteamDaddy-fork/releases/latest/download/SteamDaddy.exe",
-        "https://cdn.jsdelivr.net/gh/Contrary-v2/SteamDaddy-fork@latest/SteamDaddy.exe",
+        "https://kkgithub.com/Contrary-v2/SteamDaddy-fork/releases/latest/download/SteamDaddy.exe",
+        "https://ghproxy.net/https://github.com/Contrary-v2/SteamDaddy-fork/releases/latest/download/SteamDaddy.exe",
+        "https://gh.con.sh/https://github.com/Contrary-v2/SteamDaddy-fork/releases/latest/download/SteamDaddy.exe",
+        "https://github.moeyy.xyz/https://github.com/Contrary-v2/SteamDaddy-fork/releases/latest/download/SteamDaddy.exe",
+        "https://hub.gitmirror.com/https://github.com/Contrary-v2/SteamDaddy-fork/releases/latest/download/SteamDaddy.exe",
         "https://contrary7.duckdns.org/contrary/steamdaddy/releases/download/latest/SteamDaddy.exe",
         "https://github.com/Contrary7/SteamDaddy-Backup/releases/latest/download/SteamDaddy.exe",
         "https://codeberg.org/Contrary/SteamDaddy/releases/download/latest/SteamDaddy.exe"
@@ -257,18 +261,27 @@ try {
 
     Write-Host "[SteamDaddy] Downloading SteamDaddy.exe to Desktop..." -ForegroundColor Magenta
     $downloadSuccess = $false
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $curlExe = (Get-Command curl.exe -ErrorAction SilentlyContinue)
     foreach ($cUrl in $candidateUrls) {
+        $mirrorOk = $false
         try {
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Invoke-WebRequest -Uri $cUrl -OutFile $destPath -UseBasicParsing -TimeoutSec 20
-            if ((Test-Path $destPath) -and (Get-Item $destPath).Length -gt 1000000) {
-                $downloadSuccess = $true
-                Write-Host "[SteamDaddy] Download completed successfully!" -ForegroundColor Green
-                break
+            if ($curlExe) {
+                # curl.exe handles GitHub S3 redirects and large files more reliably than Invoke-WebRequest
+                & curl.exe -L --connect-timeout 15 --max-time 90 --retry 1 --retry-delay 2 -s -o $destPath $cUrl
+            } else {
+                Invoke-WebRequest -Uri $cUrl -OutFile $destPath -UseBasicParsing -TimeoutSec 90 -MaximumRedirection 10
             }
-        } catch {
-            Write-Host "[SteamDaddy] Mirror failed, trying next fallback..." -ForegroundColor DarkYellow
+            if ((Test-Path $destPath) -and (Get-Item $destPath).Length -gt 1000000) {
+                $mirrorOk = $true
+            }
+        } catch {}
+        if ($mirrorOk) {
+            $downloadSuccess = $true
+            Write-Host "[SteamDaddy] Download completed successfully!" -ForegroundColor Green
+            break
         }
+        Write-Host "[SteamDaddy] Mirror failed, trying next fallback..." -ForegroundColor DarkYellow
     }
     if (-not $downloadSuccess) {
         throw "Failed to download SteamDaddy.exe from all mirrors."
